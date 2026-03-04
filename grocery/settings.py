@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'order',
     'cart',
     'review',
+    'payments',
     'rest_framework',
     'djoser',
     
@@ -188,3 +189,12 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'mdzuel.2021@gmail.com'
 EMAIL_HOST_PASSWORD = 'gjpbqmjuiacnsngo'
+
+# SSLCommerz settings
+SSLCOMMERZ_STORE_ID = "testbox"
+SSLCOMMERZ_STORE_PASSWORD = "qwerty"
+
+SSLCOMMERZ_INIT_URL = "https://sandbox.sslcommerz.com/gwprocess/v4/api.php"
+SSLCOMMERZ_VALIDATION_URL = "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php"
+
+BASE_URL = "http://127.0.0.1:8000"

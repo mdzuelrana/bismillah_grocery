@@ -54,6 +54,7 @@ urlpatterns = [
     path('api/payment/', include('payments.urls')),
     path('admin/', admin.site.urls),
     path('', include('tasks.urls')),
+    path('api/', include(router.urls)),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

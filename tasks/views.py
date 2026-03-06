@@ -14,7 +14,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated, IsSellerOrAdmin]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         user = self.request.user

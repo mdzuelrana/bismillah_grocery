@@ -11,13 +11,18 @@ from tasks.permissions import IsReviewOwner,IsSellerOrAdmin
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-
+    permission_classes = [permissions.AllowAny]
+    
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         user = self.request.user
+
+        # If user not logged in
+        if not user.is_authenticated:
+            return Product.objects.all()
 
         if user.role == 'admin':
             return Product.objects.all()
@@ -29,7 +34,3 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(seller=self.request.user)
-
-
-
-

@@ -70,9 +70,9 @@ MIDDLEWARE = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ],
+    # 'DEFAULT_PERMISSION_CLASSES': [
+    #     'rest_framework.permissions.AllowAny',
+    # ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
        
@@ -83,9 +83,9 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 SIMPLE_JWT = {
-   'AUTH_HEADER_TYPES': ('JWT',),
-   "ACCESS_TOKEN_LIFETIME": timedelta(days=5),
-   'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
 
@@ -177,8 +177,9 @@ DJOSER = {
     #'USERNAME_RESET_CONFIRM_URL': '#/username/reset/confirm/{uid}/{token}',
     'ACTIVATION_URL': 'activate/{uid}/{token}',
     'SEND_ACTIVATION_EMAIL': True,
+    'LOGIN_FIELD': 'username',
     'SERIALIZERS': {
-        'LOGIN_FIELD': 'email',
+        
         'USER_CREATE_PASSWORD_RETYPE': True,
         'user_create':'users.serializers.CustomUserCreateSerializer',
         'current_user':'users.serializers.ProfileSerializer'

@@ -11,6 +11,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
+
     items = OrderItemSerializer(many=True, read_only=True)
 
     class Meta:
@@ -30,39 +31,28 @@ class OrderSerializer(serializers.ModelSerializer):
         total = 0
 
         for item in cart_items:
+
             if item.product.stock < item.quantity:
                 raise serializers.ValidationError(
                     f"Not enough stock for {item.product.name}"
                 )
+
             total += item.product.price * item.quantity
 
-        if user.balance < total:
-            raise serializers.ValidationError("Insufficient balance")
-
-        
-        user.balance -= total
-        user.save()
-
-        
+        # Create order (NOT PAID YET)
         order = Order.objects.create(
             customer=user,
             total_amount=total,
-            is_paid=True
+            payment_status="pending",
+            is_paid=False
         )
 
-        
         for item in cart_items:
+
             OrderItem.objects.create(
                 order=order,
                 product=item.product,
                 quantity=item.quantity
             )
-
-            
-            item.product.stock -= item.quantity
-            item.product.save()
-
-        
-        cart_items.delete()
 
         return order

@@ -24,6 +24,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             'id',
             'username',
             'email',
+            'role'
             'balance',
             'shopping_preferences',
             'purchase_history',

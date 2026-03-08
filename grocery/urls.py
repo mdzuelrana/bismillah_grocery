@@ -51,6 +51,7 @@ router.register('reviews', ReviewViewSet,basename='reviews')
 router.register('admin-products', AdminProductViewSet, basename='admin-products')
 router.register('admin-orders', AdminOrderViewSet, basename='admin-orders')
 urlpatterns = [
+    path('api/', include('orders.urls')), 
     path('api/payment/', include('payments.urls')),
     path('admin/', admin.site.urls),
     path('', include('tasks.urls')),

@@ -32,14 +32,7 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order {self.id}"
-# class Order(models.Model):
-#     customer = models.ForeignKey(
-#         settings.AUTH_USER_MODEL,
-#         on_delete=models.CASCADE
-#     )
-#     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
-#     is_paid = models.BooleanField(default=False)
-#     created_at = models.DateTimeField(auto_now_add=True)
+
 
 
 class OrderItem(models.Model):

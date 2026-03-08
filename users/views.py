@@ -1,10 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from users.models import User
-from rest_framework.views import APIView
 from .serializers import ProfileSerializer
 from users.permissions import IsAdminUserRole
 from tasks.models import Product
@@ -15,11 +12,41 @@ from django.db.models import Sum
 from tasks.models import Product
 from users.models import User
 from order.models import Order
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
+from rest_framework.decorators import api_view
+
+
 # Create your views here.
 
 
+@api_view(['POST'])
+def activate_account(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User.objects.get(pk=uid)
+    except (User.DoesNotExist, ValueError):
+        return Response({"detail": "Invalid activation link."}, status=400)
+
+    if default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+        return Response({"detail": "Account activated successfully."})
+    return Response({"detail": "Activation link invalid or expired."}, status=400)
 
 
+@api_view(['POST'])
+def register_user(request):
+    user = User.objects.create_user(
+        username=request.data["username"],
+        email=request.data["email"],
+        password=request.data["password"],
+        is_active=False,
+    )
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    send_activation_email(user, uid, token)
+    return Response({"detail": "Check your email to activate your account."}, status=201)
 
 class AdminDashboardStats(APIView):
     permission_classes = [IsAuthenticated, IsAdminUserRole]

@@ -47,21 +47,34 @@ class AdminProductViewSet(viewsets.ModelViewSet):
 
 
 class ProfileView(APIView):
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = ProfileSerializer(request.user)
-        return Response(serializer.data)
 
-    def put(self, request):
-        serializer = ProfileSerializer(
-            request.user,
-            data=request.data,
-            partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        user = request.user
+
+        return Response({
+            "username": user.username,
+            "email": user.email
+        })
+
+    def patch(self, request):
+
+        user = request.user
+
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        if username:
+            user.username = username
+
+        if password:
+            user.set_password(password)
+
+        user.save()
+
+        return Response({"message": "Profile updated"})
 
 
 class UserViewSet(viewsets.ModelViewSet):

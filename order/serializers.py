@@ -16,7 +16,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'customer', 'total_amount', 'is_paid', 'items']
+        fields = ['id', 'customer', 'total_amount', 'is_paid', 'items','full_name','phone','address']
         read_only_fields = ['customer', 'total_amount', 'is_paid']
 
     @transaction.atomic
@@ -44,7 +44,11 @@ class OrderSerializer(serializers.ModelSerializer):
             customer=user,
             total_amount=total,
             payment_status="pending",
-            is_paid=False
+            is_paid=False,
+            full_name=validated_data.get("full_name"),
+            phone=validated_data.get("phone"),
+            address=validated_data.get("address"),
+
         )
 
         for item in cart_items:

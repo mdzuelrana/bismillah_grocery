@@ -19,7 +19,9 @@ class Order(models.Model):
     customer = models.ForeignKey(User,on_delete=models.CASCADE)
 
     total_amount = models.DecimalField(max_digits=10,decimal_places=2)
-
+    full_name = models.CharField(max_length=255)
+    phone = models.CharField(max_length=20)
+    address = models.TextField()
     payment_status = models.CharField(
         max_length=20,
         choices=PAYMENT_STATUS,

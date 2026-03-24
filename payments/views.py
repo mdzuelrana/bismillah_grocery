@@ -1,7 +1,7 @@
 import requests
 from django.conf import settings
 from django.http import HttpResponse
-
+from django.shortcuts import redirect
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -33,16 +33,36 @@ class PaymentValidationView(APIView):
 
 
 # PAYMENT HISTORY
+from datetime import timedelta
+from django.utils.timezone import now
+
 class PaymentHistoryView(generics.ListAPIView):
 
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Payment.objects.filter(user=self.request.user)
+
+        user = self.request.user
+        days = self.request.query_params.get("days")
+
+        queryset = Payment.objects.filter(user=user)
+
+        # ✅ Filter last N days
+        if days:
+            try:
+                days = int(days)
+                date_from = now() - timedelta(days=days)
+                queryset = queryset.filter(created_at__gte=date_from)
+            except:
+                pass
+
+        return queryset.order_by("-created_at")
 
 
 # PAYMENT SUCCESS
+
+
 class PaymentSuccessView(APIView):
 
     def post(self, request):
@@ -61,7 +81,9 @@ class PaymentSuccessView(APIView):
             order.is_paid = True
             order.save()
 
-        return HttpResponse("Payment Successful")
+            return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/orders/{order.id}")
+
+        return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/orders")
 
 
 # PAYMENT FAIL
@@ -77,14 +99,14 @@ class PaymentFailView(APIView):
             payment.status = "failed"
             payment.save()
 
-        return HttpResponse("Payment Failed")
+        return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/orders")
 
 
 # PAYMENT CANCEL
 class PaymentCancelView(APIView):
 
     def post(self, request):
-        return HttpResponse("Payment Cancelled")
+        return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/cart")
 
 
 # INITIATE PAYMENT

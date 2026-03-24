@@ -214,7 +214,10 @@ SSLCOMMERZ_STORE_PASSWORD = "qwerty"
 SSLCOMMERZ_INIT_URL = "https://sandbox.sslcommerz.com/gwprocess/v4/api.php"
 SSLCOMMERZ_VALIDATION_URL = "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php"
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "https://bismillah-grocery.vercel.app"
 CSRF_TRUSTED_ORIGINS = [
     "https://bismillah-grocery.vercel.app"
 ]
+
+
+FRONTEND_URL = "https://grocery-frontend-nine.vercel.app"

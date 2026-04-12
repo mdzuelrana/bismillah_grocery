@@ -81,9 +81,8 @@ class PaymentSuccessView(APIView):
             order.is_paid = True
             order.save()
 
-            return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/orders/{order.id}")
-
-        return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/orders")
+        # ✅ REDIRECT TO FRONTEND PAGE
+        return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/payment-success")
 
 
 # PAYMENT FAIL

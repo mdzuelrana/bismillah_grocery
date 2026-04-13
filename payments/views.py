@@ -99,6 +99,7 @@ class PaymentSuccessView(APIView):
             CartItem.objects.filter(cart__user=order.customer).delete()
 
         return HttpResponse(_redirect_html(
+            
             f"{settings.FRONTEND_URL}/customer-dashboard/payment-success"
             f"?order_id={payment.order.id}"
         ), content_type="text/html")

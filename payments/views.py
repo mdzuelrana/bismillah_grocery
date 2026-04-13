@@ -71,8 +71,9 @@ class PaymentSuccessView(APIView):
 
         payment = Payment.objects.filter(transaction_id=tran_id).first()
 
-        if payment:
+        order_id = None
 
+        if payment:
             payment.status = "completed"
             payment.save()
 
@@ -81,10 +82,21 @@ class PaymentSuccessView(APIView):
             order.is_paid = True
             order.save()
 
-        # ✅ REDIRECT TO FRONTEND PAGE
-            return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/payment-success")
-        return redirect(f"{settings.FRONTEND_URL}/customer-dashboard")
+            order_id = order.id
 
+        # ✅ HTML AUTO REDIRECT (IMPORTANT FIX)
+        return HttpResponse(f"""
+            <html>
+                <head>
+                    <script>
+                        window.location.href = "{settings.FRONTEND_URL}/customer-dashboard/payment-success?order_id={order_id}";
+                    </script>
+                </head>
+                <body>
+                    <p>Redirecting to your dashboard...</p>
+                </body>
+            </html>
+        """)
 
 # PAYMENT FAIL
 class PaymentFailView(APIView):
@@ -99,14 +111,24 @@ class PaymentFailView(APIView):
             payment.status = "failed"
             payment.save()
 
-        return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/orders")
+        # return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/orders")
+        return HttpResponse(f"""
+            <script>
+                window.location.href = "{settings.FRONTEND_URL}/customer-dashboard/orders";
+            </script>
+        """)
 
 
 # PAYMENT CANCEL
 class PaymentCancelView(APIView):
 
     def post(self, request):
-        return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/cart")
+        # return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/cart")
+        return HttpResponse(f"""
+            <script>
+                window.location.href = "{settings.FRONTEND_URL}/customer-dashboard/cart";
+            </script>
+        """)
 
 
 # INITIATE PAYMENT

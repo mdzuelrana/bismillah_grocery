@@ -217,8 +217,9 @@ SSLCOMMERZ_VALIDATION_URL = "https://sandbox.sslcommerz.com/validator/api/valida
 BASE_URL = "https://bismillah-grocery.vercel.app"
 CSRF_TRUSTED_ORIGINS = [
     "https://bismillah-grocery.vercel.app",
-   " https://grocery-frontend-nine.vercel.app"
+    "https://grocery-frontend-nine.vercel.app"
 ]
 
-
+FRONTEND_PROTOCOL="https"
+FRONTEND_DOMAIN="grocery-frontend-nine.vercel.app"
 FRONTEND_URL = "https://grocery-frontend-nine.vercel.app"

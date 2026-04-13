@@ -68,9 +68,11 @@ class SSLCommerzPaymentView(APIView):
 
 
 # ── SUCCESS ───────────────────────────────────────────────────────────────────
+from cart.models import CartItem  # ✅ add this import
+
 @method_decorator(csrf_exempt, name="dispatch")
 class PaymentSuccessView(APIView):
-    permission_classes = [AllowAny]  # ✅ SSLCommerz posts here — no JWT token
+    permission_classes = [AllowAny]
 
     def post(self, request):
         tran_id = request.POST.get("tran_id")
@@ -92,6 +94,9 @@ class PaymentSuccessView(APIView):
             order.payment_status = "paid"
             order.is_paid        = True
             order.save()
+
+            # ✅ clear cart HERE — only after payment is confirmed
+            CartItem.objects.filter(cart__user=order.customer).delete()
 
         return HttpResponse(_redirect_html(
             f"{settings.FRONTEND_URL}/customer-dashboard/payment-success"

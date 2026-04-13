@@ -63,11 +63,15 @@ class PaymentHistoryView(generics.ListAPIView):
 # PAYMENT SUCCESS
 
 
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
+@method_decorator(csrf_exempt, name='dispatch')
 class PaymentSuccessView(APIView):
 
     def post(self, request):
 
-        tran_id = request.data.get("tran_id")
+        tran_id = request.POST.get("tran_id")  # ✅ IMPORTANT CHANGE
 
         payment = Payment.objects.filter(transaction_id=tran_id).first()
 
@@ -84,51 +88,47 @@ class PaymentSuccessView(APIView):
 
             order_id = order.id
 
-        # ✅ HTML AUTO REDIRECT (IMPORTANT FIX)
-        return HttpResponse(f"""
-            <html>
-                <head>
-                    <script>
-                        window.location.href = "{settings.FRONTEND_URL}/customer-dashboard/payment-success?order_id={order_id}";
-                    </script>
-                </head>
-                <body>
-                    <p>Redirecting to your dashboard...</p>
-                </body>
-            </html>
-        """)
+        html = f"""
+        <html>
+            <head>
+                <meta http-equiv="refresh" content="0;url={settings.FRONTEND_URL}/customer-dashboard/payment-success?order_id={order_id}" />
+            </head>
+            <body>
+                Redirecting...
+            </body>
+        </html>
+        """
+
+        return HttpResponse(html, content_type="text/html")
 
 # PAYMENT FAIL
+@method_decorator(csrf_exempt, name='dispatch')
+class PaymentCancelView(APIView):
+
+    def post(self, request):
+
+        return HttpResponse(f"""
+        <html>
+            <head>
+                <meta http-equiv="refresh" content="0;url={settings.FRONTEND_URL}/customer-dashboard/cart" />
+            </head>
+        </html>
+        """, content_type="text/html")
+
+
+# PAYMENT CANCEL
+@method_decorator(csrf_exempt, name='dispatch')
 class PaymentFailView(APIView):
 
     def post(self, request):
 
-        tran_id = request.data.get("tran_id")
-
-        payment = Payment.objects.filter(transaction_id=tran_id).first()
-
-        if payment:
-            payment.status = "failed"
-            payment.save()
-
-        # return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/orders")
         return HttpResponse(f"""
-            <script>
-                window.location.href = "{settings.FRONTEND_URL}/customer-dashboard/orders";
-            </script>
-        """)
-
-
-# PAYMENT CANCEL
-class PaymentCancelView(APIView):
-
-    def post(self, request):
-        # return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/cart")
-        return HttpResponse(f"""
-            <script>
-                window.location.href = "{settings.FRONTEND_URL}/customer-dashboard/cart";
-            </script>
-        """)
+        <html>
+            <head>
+                <meta http-equiv="refresh" content="0;url={settings.FRONTEND_URL}/customer-dashboard/orders" />
+            </head>
+        </html>
+        """, content_type="text/html")
 
 
 # INITIATE PAYMENT

@@ -8,9 +8,14 @@ from django.conf import settings
 
 
 class AdminOrderViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset         = Order.objects.all().prefetch_related('items__product')
-    serializer_class = OrderSerializer
+    queryset           = Order.objects.all().prefetch_related('items__product')
+    serializer_class   = OrderSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdminUserRole]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -20,7 +25,12 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Order.objects.filter(
             customer=self.request.user
-        ).prefetch_related('items__product').order_by('-created_at')  # ✅ prefetch for performance
+        ).prefetch_related('items__product').order_by('-created_at')
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request  # ✅ lets serializer build full image URLs
+        return context
 
     def perform_create(self, serializer):
         order = serializer.save(customer=self.request.user)
@@ -43,6 +53,11 @@ class OrderViewSet(viewsets.ModelViewSet):
 class SellerOrderViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class   = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request  # ✅ same fix for seller view
+        return context
 
     def get_queryset(self):
         user = self.request.user

@@ -5,12 +5,18 @@ from django.db import transaction
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    product_name  = serializers.CharField(source='product.name',  read_only=True)
-    product_image = serializers.ImageField(source='product.image', read_only=True)
+    product_name  = serializers.CharField(source='product.name', read_only=True)
+    product_image = serializers.SerializerMethodField()  # ✅ returns full URL
 
     class Meta:
         model  = OrderItem
         fields = ['id', 'product', 'product_name', 'product_image', 'quantity', 'price']
+
+    def get_product_image(self, obj):
+        request = self.context.get('request')
+        if obj.product.image and request:
+            return request.build_absolute_uri(obj.product.image.url)
+        return None
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -27,11 +33,11 @@ class OrderSerializer(serializers.ModelSerializer):
             'full_name',
             'phone',
             'address',
-            'city',           # ✅ added
-            'notes',          # ✅ added
-            'order_status',   # ✅ added
-            'payment_status', # ✅ added
-            'created_at',     # ✅ added — needed for Orders page date display
+            'city',
+            'notes',
+            'order_status',
+            'payment_status',
+            'created_at',
         ]
         read_only_fields = ['customer', 'total_amount', 'is_paid', 'order_status', 'payment_status']
 
@@ -43,7 +49,6 @@ class OrderSerializer(serializers.ModelSerializer):
         if not cart_items.exists():
             raise serializers.ValidationError("Your cart is empty.")
 
-        # ── stock check ───────────────────────────────────────────────────────
         for item in cart_items:
             if item.product.stock < item.quantity:
                 raise serializers.ValidationError(
@@ -51,10 +56,8 @@ class OrderSerializer(serializers.ModelSerializer):
                     f"Available: {item.product.stock}, Requested: {item.quantity}"
                 )
 
-        # ── calculate total ───────────────────────────────────────────────────
         total = sum(item.product.price * item.quantity for item in cart_items)
 
-        # ── create order ──────────────────────────────────────────────────────
         order = Order.objects.create(
             customer       = user,
             total_amount   = total,
@@ -64,20 +67,17 @@ class OrderSerializer(serializers.ModelSerializer):
             full_name      = validated_data.get("full_name"),
             phone          = validated_data.get("phone"),
             address        = validated_data.get("address"),
-            city           = validated_data.get("city", ""),   # ✅ added
-            notes          = validated_data.get("notes", ""),  # ✅ added
+            city           = validated_data.get("city", ""),
+            notes          = validated_data.get("notes", ""),
         )
 
-        # ── create order items ────────────────────────────────────────────────
         for item in cart_items:
             OrderItem.objects.create(
                 order    = order,
                 product  = item.product,
                 quantity = item.quantity,
-                price    = item.product.price,  # ✅ THE FIX — this was missing, causing 500
+                price    = item.product.price,
             )
 
-        # ── clear cart after order placed ─────────────────────────────────────
-        cart_items.delete()  # ✅ empty the cart once order is created
-
+        cart_items.delete()
         return order

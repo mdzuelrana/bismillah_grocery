@@ -82,7 +82,8 @@ class PaymentSuccessView(APIView):
             order.save()
 
         # ✅ REDIRECT TO FRONTEND PAGE
-        return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/payment-success")
+            return redirect(f"{settings.FRONTEND_URL}/customer-dashboard/payment-success")
+        return redirect(f"{settings.FRONTEND_URL}/customer-dashboard")
 
 
 # PAYMENT FAIL
@@ -129,9 +130,9 @@ class SSLCommerzPaymentView(APIView):
                 "currency": "BDT",
                 "tran_id": tran_id,
 
-                "success_url": f"{settings.FRONTEND_URL}/api/payment/success/",
-                "fail_url": f"{settings.FRONTEND_URL}/api/payment/fail/",
-                "cancel_url": f"{settings.FRONTEND_URL}/api/payment/cancel/",
+                "success_url": f"{settings.BASE_URL}/api/payment/success/",
+                "fail_url": f"{settings.BASE_URL}/api/payment/fail/",
+                "cancel_url": f"{settings.BASE_URL}/api/payment/cancel/",
 
                 "cus_name": request.user.first_name,
                 "cus_email": request.user.email,

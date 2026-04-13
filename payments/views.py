@@ -1,10 +1,9 @@
 import requests
 from django.conf import settings
 from django.http import HttpResponse
-from django.shortcuts import redirect
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny  # ✅ import AllowAny
 from rest_framework import generics, status
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -26,24 +25,23 @@ class SSLCommerzPaymentView(APIView):
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Prevent duplicate pending payments for the same order
         Payment.objects.filter(order=order, status="pending").delete()
 
         tran_id = f"txn_{order.id}"
 
         data = {
-            "store_id": settings.SSLCOMMERZ_STORE_ID,
-            "store_passwd": settings.SSLCOMMERZ_STORE_PASSWORD,
-            "total_amount": float(order.total_amount),
-            "currency": "BDT",
-            "tran_id": tran_id,
-            "success_url": f"{settings.BASE_URL}/api/payment/success/",
-            "fail_url":    f"{settings.BASE_URL}/api/payment/fail/",
-            "cancel_url":  f"{settings.BASE_URL}/api/payment/cancel/",
-            "cus_name":    request.user.get_full_name() or request.user.username,
-            "cus_email":   request.user.email,
-            "cus_add1":    "Bangladesh",
-            "cus_phone":   "01700000000",
+            "store_id":         settings.SSLCOMMERZ_STORE_ID,
+            "store_passwd":     settings.SSLCOMMERZ_STORE_PASSWORD,
+            "total_amount":     float(order.total_amount),
+            "currency":         "BDT",
+            "tran_id":          tran_id,
+            "success_url":      f"{settings.BASE_URL}/api/payment/success/",
+            "fail_url":         f"{settings.BASE_URL}/api/payment/fail/",
+            "cancel_url":       f"{settings.BASE_URL}/api/payment/cancel/",
+            "cus_name":         request.user.get_full_name() or request.user.username,
+            "cus_email":        request.user.email,
+            "cus_add1":         order.address or "Bangladesh",
+            "cus_phone":        order.phone   or "01700000000",
             "product_name":     "Grocery Order",
             "product_category": "Grocery",
             "product_profile":  "general",
@@ -51,7 +49,7 @@ class SSLCommerzPaymentView(APIView):
         }
 
         response = requests.post(settings.SSLCOMMERZ_INIT_URL, data=data)
-        result = response.json()
+        result   = response.json()
 
         if result.get("status") == "SUCCESS":
             Payment.objects.create(
@@ -72,22 +70,22 @@ class SSLCommerzPaymentView(APIView):
 # ── SUCCESS ───────────────────────────────────────────────────────────────────
 @method_decorator(csrf_exempt, name="dispatch")
 class PaymentSuccessView(APIView):
+    permission_classes = [AllowAny]  # ✅ SSLCommerz posts here — no JWT token
 
     def post(self, request):
         tran_id = request.POST.get("tran_id")
-        val_id  = request.POST.get("val_id")   # SSLCommerz sends this too
+        val_id  = request.POST.get("val_id")
 
         payment = Payment.objects.filter(transaction_id=tran_id).first()
 
         if not payment:
-            # Payment record missing — redirect to orders so user can see status
             return HttpResponse(_redirect_html(
                 f"{settings.FRONTEND_URL}/customer-dashboard/orders?error=payment_not_found"
             ), content_type="text/html")
 
-        if payment.status != "completed":          # idempotency guard
-            payment.status   = "completed"
-            payment.val_id   = val_id              # store val_id if your model has it
+        if payment.status != "completed":
+            payment.status = "completed"
+            payment.val_id = val_id
             payment.save()
 
             order = payment.order
@@ -95,53 +93,51 @@ class PaymentSuccessView(APIView):
             order.is_paid        = True
             order.save()
 
-        return HttpResponse(
-            _redirect_html(
-                f"{settings.FRONTEND_URL}/customer-dashboard/payment-success"
-                f"?order_id={payment.order.id}"
-            ),
-            content_type="text/html",
-        )
+        return HttpResponse(_redirect_html(
+            f"{settings.FRONTEND_URL}/customer-dashboard/payment-success"
+            f"?order_id={payment.order.id}"
+        ), content_type="text/html")
 
 
 # ── FAIL ──────────────────────────────────────────────────────────────────────
 @method_decorator(csrf_exempt, name="dispatch")
 class PaymentFailView(APIView):
+    permission_classes = [AllowAny]  # ✅
 
     def post(self, request):
         tran_id = request.POST.get("tran_id")
         Payment.objects.filter(transaction_id=tran_id, status="pending").update(status="failed")
 
-        return HttpResponse(
-            _redirect_html(f"{settings.FRONTEND_URL}/customer-dashboard/orders?payment=failed"),
-            content_type="text/html",
-        )
+        return HttpResponse(_redirect_html(
+            f"{settings.FRONTEND_URL}/customer-dashboard/orders?payment=failed"
+        ), content_type="text/html")
 
 
 # ── CANCEL ────────────────────────────────────────────────────────────────────
 @method_decorator(csrf_exempt, name="dispatch")
 class PaymentCancelView(APIView):
+    permission_classes = [AllowAny]  # ✅
 
     def post(self, request):
         tran_id = request.POST.get("tran_id")
         Payment.objects.filter(transaction_id=tran_id, status="pending").update(status="cancelled")
 
-        return HttpResponse(
-            _redirect_html(f"{settings.FRONTEND_URL}/customer-dashboard/cart?payment=cancelled"),
-            content_type="text/html",
-        )
+        return HttpResponse(_redirect_html(
+            f"{settings.FRONTEND_URL}/customer-dashboard/cart?payment=cancelled"
+        ), content_type="text/html")
 
 
 # ── VALIDATION ────────────────────────────────────────────────────────────────
 class PaymentValidationView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        val_id = request.data.get("val_id")
+        val_id  = request.data.get("val_id")
         payload = {
-            "val_id":        val_id,
-            "store_id":      settings.SSLCOMMERZ_STORE_ID,
-            "store_passwd":  settings.SSLCOMMERZ_STORE_PASSWORD,
-            "format":        "json",
+            "val_id":       val_id,
+            "store_id":     settings.SSLCOMMERZ_STORE_ID,
+            "store_passwd": settings.SSLCOMMERZ_STORE_PASSWORD,
+            "format":       "json",
         }
         response = requests.get(settings.SSLCOMMERZ_VALIDATION_URL, params=payload)
         return Response(response.json())
@@ -169,9 +165,8 @@ class PaymentHistoryView(generics.ListAPIView):
 
 # ── HELPER ────────────────────────────────────────────────────────────────────
 def _redirect_html(url: str) -> str:
-    """Return a minimal HTML page that instantly redirects to `url`."""
     return f"""<!DOCTYPE html>
 <html>
   <head><meta http-equiv="refresh" content="0;url={url}"></head>
-  <body>Redirecting…</body>
+  <body>Redirecting...</body>
 </html>"""

@@ -30,6 +30,7 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ['seller', 'created_at', 'image_url', 'category_name']
 
     def get_image_url(self, obj):
-        if obj.image:
-            return obj.image.url  # ✅ Supabase returns full https URL automatically
+        request = self.context.get('request')
+        if obj.image and request:
+            return request.build_absolute_uri(obj.image.url)
         return None

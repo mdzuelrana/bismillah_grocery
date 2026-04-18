@@ -52,18 +52,26 @@ class AdminDashboardStats(APIView):
     permission_classes = [IsAuthenticated, IsAdminUserRole]
 
     def get(self, request):
-        total_users = User.objects.count()
+        total_users    = User.objects.count()
         total_products = Product.objects.count()
-        total_orders = Order.objects.count()
-        total_revenue = Order.objects.aggregate(
-            total=Sum('total_amount')
-        )['total'] or 0
+        total_orders   = Order.objects.count()
 
+        # ✅ only count revenue from paid orders
+        total_revenue = Order.objects.filter(
+            payment_status="paid"
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+
+        # ✅ order status breakdown
         return Response({
-            "total_users": total_users,
+            "total_users":    total_users,
             "total_products": total_products,
-            "total_orders": total_orders,
-            "total_revenue": total_revenue,
+            "total_orders":   total_orders,
+            "total_revenue":  total_revenue,
+            "processing":     Order.objects.filter(order_status="processing").count(),
+            "confirmed":      Order.objects.filter(order_status="confirmed").count(),
+            "shipped":        Order.objects.filter(order_status="shipped").count(),
+            "delivered":      Order.objects.filter(order_status="delivered").count(),
+            "cancelled":      Order.objects.filter(order_status="cancelled").count(),
         })
 
 

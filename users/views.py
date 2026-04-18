@@ -76,9 +76,14 @@ class AdminDashboardStats(APIView):
 
 
 class AdminProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().select_related('category')  # ✅ optimize query
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticated, IsAdminUserRole]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request  # ✅ needed for image_url full URL
+        return context
 
 
 class ProfileView(APIView):

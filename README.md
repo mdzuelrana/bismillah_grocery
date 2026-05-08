@@ -179,7 +179,7 @@ Order Paid
 
 👨‍💻 Author
 
-Developed by Your Name
+Developed by Md Zuel Rana
 
 
 📄 License
